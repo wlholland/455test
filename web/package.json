@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "migrate:supabase": "node scripts/migrate-to-supabase.mjs"
+    "migrate:supabase": "node --env-file=.env scripts/migrate-to-supabase.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^12.8.0",
