@@ -1,4 +1,4 @@
-# Shop ML App (Supabase + Vercel)
+# Shop ML App (Supabase + Vercel) -
 
 This app lives in the `web/` subfolder and uses Supabase Postgres as its database.
 
