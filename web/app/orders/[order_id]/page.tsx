@@ -1,5 +1,4 @@
-import { cookies } from "next/headers";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import { queryOne, query } from "@/lib/db";
 import Link from "next/link";
 
@@ -40,16 +39,12 @@ export default async function OrderDetailPage({
   params: Promise<{ order_id: string }>;
   searchParams: Promise<{ success?: string }>;
 }) {
-  const cookieStore = await cookies();
-  const customerId = cookieStore.get("customer_id")?.value;
-  if (!customerId) redirect("/select-customer");
-
   const { order_id } = await params;
   const { success } = await searchParams;
 
   const order = await queryOne<Order>(
-    "SELECT * FROM orders WHERE order_id = $1 AND customer_id = $2",
-    [order_id, customerId]
+    "SELECT * FROM orders WHERE order_id = $1",
+    [order_id]
   );
   if (!order) notFound();
 
@@ -104,8 +99,8 @@ export default async function OrderDetailPage({
                   <td>{item.product_name}</td>
                   <td>{item.category}</td>
                   <td>{item.quantity}</td>
-                  <td>${item.unit_price.toFixed(2)}</td>
-                  <td>${item.line_total.toFixed(2)}</td>
+                  <td>${Number(item.unit_price).toFixed(2)}</td>
+                  <td>${Number(item.line_total).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -117,19 +112,19 @@ export default async function OrderDetailPage({
             <tbody>
               <tr>
                 <td style={{ color: "var(--muted)", padding: "4px 0" }}>Subtotal</td>
-                <td style={{ textAlign: "right" }}>${order.order_subtotal?.toFixed(2) ?? "0.00"}</td>
+                <td style={{ textAlign: "right" }}>${Number(order.order_subtotal ?? 0).toFixed(2)}</td>
               </tr>
               <tr>
                 <td style={{ color: "var(--muted)", padding: "4px 0" }}>Shipping</td>
-                <td style={{ textAlign: "right" }}>${order.shipping_fee?.toFixed(2) ?? "0.00"}</td>
+                <td style={{ textAlign: "right" }}>${Number(order.shipping_fee ?? 0).toFixed(2)}</td>
               </tr>
               <tr>
                 <td style={{ color: "var(--muted)", padding: "4px 0" }}>Tax</td>
-                <td style={{ textAlign: "right" }}>${order.tax_amount?.toFixed(2) ?? "0.00"}</td>
+                <td style={{ textAlign: "right" }}>${Number(order.tax_amount ?? 0).toFixed(2)}</td>
               </tr>
               <tr style={{ fontWeight: 700, fontSize: "16px" }}>
                 <td style={{ paddingTop: "8px" }}>Total</td>
-                <td style={{ textAlign: "right", paddingTop: "8px" }}>${order.order_total?.toFixed(2) ?? "0.00"}</td>
+                <td style={{ textAlign: "right", paddingTop: "8px" }}>${Number(order.order_total ?? 0).toFixed(2)}</td>
               </tr>
             </tbody>
           </table>

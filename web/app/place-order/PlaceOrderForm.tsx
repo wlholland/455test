@@ -41,7 +41,7 @@ export default function PlaceOrderForm({ products }: { products: Product[] }) {
   }
 
   function getProduct(id: number): Product | undefined {
-    return products.find((p) => p.product_id === id);
+    return products.find((p) => Number(p.product_id) === Number(id));
   }
 
   const orderTotal = lines.reduce((sum, l) => {
@@ -122,7 +122,7 @@ export default function PlaceOrderForm({ products }: { products: Product[] }) {
                   <td style={{ color: "var(--muted)", fontSize: "13px" }}>
                     {prod?.category ?? "—"}
                   </td>
-                  <td>${prod?.price?.toFixed(2) ?? "0.00"}</td>
+                  <td>${Number(prod?.price ?? 0).toFixed(2)}</td>
                   <td>
                     <input
                       type="number"

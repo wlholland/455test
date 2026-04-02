@@ -1,4 +1,4 @@
-import { query } from "@/lib/db";
+import { query, queryOne } from "@/lib/db";
 import Link from "next/link";
 import FraudReviewTable from "./FraudReviewTable";
 
@@ -15,9 +15,44 @@ interface PriorityRow {
   admin_flagged_fraud: number | null;
 }
 
-export default async function WarehousePriorityPage() {
-  const rows = await query<PriorityRow>(`
-    SELECT
+const PAGE_SIZE = 20;
+
+export default async function WarehousePriorityPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; q?: string }>;
+}) {
+  const { page: pageStr, q } = await searchParams;
+  const currentPage = Math.max(1, parseInt(pageStr ?? "1", 10) || 1);
+  const offset = (currentPage - 1) * PAGE_SIZE;
+  const search = (q ?? "").trim();
+
+  let whereClause = "WHERE p.order_id IS NOT NULL";
+  const countParams: unknown[] = [];
+  const queryParams: unknown[] = [];
+
+  if (search) {
+    whereClause += ` AND (c.full_name ILIKE $1 OR o.order_id::text = $1 OR c.email ILIKE $1)`;
+    countParams.push(`%${search}%`);
+    queryParams.push(`%${search}%`);
+  }
+
+  const countResult = await queryOne<{ total: number }>(
+    `SELECT COUNT(DISTINCT o.order_id)::int AS total
+     FROM orders o
+     JOIN customers c ON c.customer_id = o.customer_id
+     JOIN order_predictions p ON p.order_id = o.order_id
+     ${whereClause}`,
+    countParams
+  );
+  const totalOrders = countResult?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalOrders / PAGE_SIZE));
+
+  const limitParam = queryParams.length + 1;
+  const offsetParam = limitParam + 1;
+
+  const rows = await query<PriorityRow>(
+    `SELECT
       o.order_id,
       o.order_datetime,
       o.order_total,
@@ -31,22 +66,23 @@ export default async function WarehousePriorityPage() {
     FROM orders o
     JOIN customers c ON c.customer_id = o.customer_id
     JOIN order_predictions p ON p.order_id = o.order_id
-    WHERE o.fulfilled = 0
-    ORDER BY p.late_delivery_probability DESC, o.order_datetime ASC
-    LIMIT 50
-  `);
+    ${whereClause}
+    ORDER BY o.order_datetime DESC
+    LIMIT $${limitParam} OFFSET $${offsetParam}`,
+    [...queryParams, PAGE_SIZE, offset]
+  );
 
   return (
     <div>
       <div className="page-header">
         <h1>Fraud Review Queue</h1>
         <p>
-          Unfulfilled orders ranked by ML-predicted fraud probability.
-          Review the highest-risk orders and confirm whether they are actually fraudulent.
+          Orders with ML fraud predictions, sorted by most recent.
+          Review and confirm whether flagged orders are actually fraudulent.
         </p>
       </div>
 
-      {rows.length === 0 ? (
+      {totalOrders === 0 && !search ? (
         <div className="card">
           <div className="empty-state">
             <h3>No scored orders yet</h3>
@@ -60,7 +96,13 @@ export default async function WarehousePriorityPage() {
           </div>
         </div>
       ) : (
-        <FraudReviewTable initialRows={rows} />
+        <FraudReviewTable
+          initialRows={rows}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalOrders={totalOrders}
+          search={search}
+        />
       )}
 
       <div className="card">
@@ -69,7 +111,7 @@ export default async function WarehousePriorityPage() {
           The scoring API computes fraud probabilities from live order features
           (risk score, order total, item counts, customer age, and promo usage),
           then writes results to <code>order_predictions</code>. This page surfaces
-          the highest-risk unfulfilled orders so the admin can review them. Use the
+          scored orders so the admin can review them. Use the
           &quot;Confirmed Fraud&quot; checkbox to record ground-truth labels, which are
           saved back to the database for future model retraining.
         </p>

@@ -38,14 +38,14 @@ export default async function DashboardPage() {
   if (!customer) redirect("/select-customer");
 
   const stats = await queryOne<Stats>(
-    `SELECT COUNT(*) AS total_orders, ROUND(COALESCE(SUM(order_total), 0), 2) AS total_spend
+    `SELECT COUNT(*)::int AS total_orders, COALESCE(SUM(order_total), 0)::float AS total_spend
      FROM orders WHERE customer_id = $1`,
     [customerId]
   );
 
   const recentOrders = await query<RecentOrder>(
     `SELECT o.order_id, o.order_datetime, o.order_total, o.fulfilled,
-            COUNT(oi.order_item_id) AS item_count
+            COUNT(oi.order_item_id)::int AS item_count
      FROM orders o
      LEFT JOIN order_items oi ON oi.order_id = o.order_id
      WHERE o.customer_id = $1
@@ -69,7 +69,7 @@ export default async function DashboardPage() {
         </div>
         <div className="card">
           <div className="card-title">Total Spend</div>
-          <div className="card-value">${(stats?.total_spend ?? 0).toFixed(2)}</div>
+          <div className="card-value">${Number(stats?.total_spend ?? 0).toFixed(2)}</div>
         </div>
         <div className="card">
           <div className="card-title">Loyalty Tier</div>
@@ -115,7 +115,7 @@ export default async function DashboardPage() {
                     </td>
                     <td>{o.order_datetime?.slice(0, 16).replace("T", " ") ?? "—"}</td>
                     <td>{o.item_count}</td>
-                    <td>${o.order_total?.toFixed(2) ?? "0.00"}</td>
+                    <td>${Number(o.order_total ?? 0).toFixed(2)}</td>
                     <td>
                       <span className={`badge ${o.fulfilled ? "badge-success" : "badge-warning"}`}>
                         {o.fulfilled ? "Fulfilled" : "Pending"}
