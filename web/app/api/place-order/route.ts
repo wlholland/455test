@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { queryOne, queryWithClient, withTransaction } from "@/lib/db";
+import { scoreOrder } from "@/lib/score-order";
 
 interface LineItem {
   product_id: number;
@@ -79,6 +80,12 @@ export async function POST(request: Request) {
 
       return newOrderId;
     });
+
+    try {
+      await scoreOrder(order_id);
+    } catch (scoreErr) {
+      console.error("Auto-scoring failed (order still saved):", scoreErr);
+    }
 
     return NextResponse.json({ order_id });
   } catch (err) {
