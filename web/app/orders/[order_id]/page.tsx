@@ -138,18 +138,18 @@ export default async function OrderDetailPage({
 
       {prediction ? (
         <div className="card">
-          <div className="card-title">ML Prediction — Late Delivery Risk</div>
+          <div className="card-title">ML Prediction — Fraud Risk</div>
           <div style={{ display: "flex", gap: "32px", alignItems: "center" }}>
             <div>
-              <div style={{ color: "var(--muted)", fontSize: "13px", marginBottom: "4px" }}>Probability</div>
+              <div style={{ color: "var(--muted)", fontSize: "13px", marginBottom: "4px" }}>Fraud Probability</div>
               <div style={{ fontSize: "28px", fontWeight: 700, color: prediction.late_delivery_probability > 0.5 ? "var(--danger)" : "var(--success)" }}>
                 {(prediction.late_delivery_probability * 100).toFixed(1)}%
               </div>
             </div>
             <div>
-              <div style={{ color: "var(--muted)", fontSize: "13px", marginBottom: "4px" }}>Prediction</div>
+              <div style={{ color: "var(--muted)", fontSize: "13px", marginBottom: "4px" }}>Predicted Fraud</div>
               <span className={`badge ${prediction.predicted_late_delivery ? "badge-danger" : "badge-success"}`} style={{ fontSize: "14px" }}>
-                {prediction.predicted_late_delivery ? "Late" : "On Time"}
+                {prediction.predicted_late_delivery ? "Fraud" : "Not Fraud"}
               </span>
             </div>
             <div>

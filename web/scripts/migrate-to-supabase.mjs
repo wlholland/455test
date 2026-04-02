@@ -186,10 +186,14 @@ function copyRows(table, columns, client) {
 
 async function setSequence(client, sequence, table, idColumn) {
   if (!sequence) return;
-  await client.query(
-    `SELECT setval($1, COALESCE((SELECT MAX(${idColumn}) FROM ${table}), 1), true)`,
-    [sequence]
-  );
+  try {
+    await client.query(
+      `SELECT setval($1, COALESCE((SELECT MAX(${idColumn}) FROM ${table}), 1), true)`,
+      [sequence]
+    );
+  } catch {
+    // Sequence doesn't exist (BIGINT PK without GENERATED), safe to skip
+  }
 }
 
 async function main() {

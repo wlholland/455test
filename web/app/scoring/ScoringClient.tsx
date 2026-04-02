@@ -34,10 +34,10 @@ export default function ScoringClient() {
   return (
     <div>
       <div className="card">
-        <div className="card-title">Run ML Inference Job</div>
+        <div className="card-title">Run Fraud Scoring</div>
         <p style={{ fontSize: "14px", color: "var(--muted)", marginBottom: "20px", lineHeight: 1.7 }}>
-          Clicking the button runs the deployed scoring API on the server.
-          It scores all unfulfilled orders and writes probabilities to
+          Clicking the button runs the fraud-detection scoring API on the server.
+          It scores all unfulfilled orders for fraud risk and writes probabilities to
           the <code>order_predictions</code> table.
         </p>
         <button
@@ -74,7 +74,7 @@ export default function ScoringClient() {
               </div>
               {result.count && result.count > 0 && (
                 <Link href="/warehouse/priority" className="btn btn-primary">
-                  View Priority Queue →
+                  View Fraud Review Queue →
                 </Link>
               )}
             </>

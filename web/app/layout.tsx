@@ -55,7 +55,7 @@ export default async function RootLayout({
               <NavLink href="/orders">Order History</NavLink>
 
               <div className="nav-section">ML Pipeline</div>
-              <NavLink href="/warehouse/priority">Priority Queue</NavLink>
+              <NavLink href="/warehouse/priority">Fraud Review</NavLink>
               <NavLink href="/scoring">Run Scoring</NavLink>
 
               <div className="nav-section">Dev</div>

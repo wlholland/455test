@@ -4,8 +4,11 @@ import { query, withTransaction, queryWithClient } from "@/lib/db";
 interface LiveOrder {
   order_id: number;
   order_datetime: string;
-  birthdate: string;
+  order_total: number;
+  risk_score: number;
+  promo_used: number;
   num_items: number;
+  birthdate: string;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -22,6 +25,9 @@ export async function POST() {
       `SELECT
          o.order_id,
          o.order_datetime,
+         o.order_total,
+         o.risk_score,
+         o.promo_used,
          c.birthdate,
          oi_agg.num_items
        FROM orders o
@@ -44,35 +50,32 @@ export async function POST() {
 
     const nowYear = new Date().getUTCFullYear();
     const scored = liveOrders.map((order) => {
-      const orderDate = new Date(order.order_datetime);
       const birthDate = new Date(order.birthdate);
 
       const customerAge = Number.isFinite(birthDate.getUTCFullYear())
         ? nowYear - birthDate.getUTCFullYear()
         : 35;
-      const orderDow = Number.isFinite(orderDate.getUTCDay()) ? orderDate.getUTCDay() : 1;
-      const orderMonth = Number.isFinite(orderDate.getUTCMonth()) ? orderDate.getUTCMonth() + 1 : 6;
 
-      // Lightweight deployed scoring model for late-delivery risk.
-      const numItemsScaled = clamp(order.num_items, 1, 12) / 12;
-      const youngerCustomerRisk = clamp((40 - customerAge) / 25, 0, 1);
-      const weekendRisk = orderDow === 0 || orderDow === 6 ? 1 : 0;
-      const holidayRisk = orderMonth >= 11 ? 1 : 0;
+      const riskScoreNorm = clamp(order.risk_score, 0, 100) / 100;
+      const orderTotalNorm = clamp(order.order_total, 0, 5000) / 5000;
+      const numItemsNorm = clamp(order.num_items, 1, 12) / 12;
+      const youngerRisk = clamp((35 - customerAge) / 30, 0, 1);
 
       const z =
-        -2.1 +
-        2.4 * numItemsScaled +
-        1.1 * youngerCustomerRisk +
-        0.8 * weekendRisk +
-        0.6 * holidayRisk;
+        -3.0 +
+        4.0 * riskScoreNorm +
+        1.5 * orderTotalNorm +
+        0.8 * numItemsNorm +
+        0.6 * youngerRisk +
+        0.5 * order.promo_used;
 
-      const lateDeliveryProbability = clamp(sigmoid(z), 0.01, 0.99);
-      const predictedLateDelivery = lateDeliveryProbability >= 0.5 ? 1 : 0;
+      const fraudProbability = clamp(sigmoid(z), 0.01, 0.99);
+      const predictedFraud = fraudProbability >= 0.5 ? 1 : 0;
 
       return {
         order_id: order.order_id,
-        late_delivery_probability: lateDeliveryProbability,
-        predicted_late_delivery: predictedLateDelivery,
+        fraud_probability: fraudProbability,
+        predicted_fraud: predictedFraud,
       };
     });
 
@@ -91,8 +94,8 @@ export async function POST() {
                prediction_timestamp = EXCLUDED.prediction_timestamp`,
           [
             row.order_id,
-            row.late_delivery_probability,
-            row.predicted_late_delivery,
+            row.fraud_probability,
+            row.predicted_fraud,
             predictionTimestamp,
           ]
         );
@@ -102,7 +105,7 @@ export async function POST() {
     return NextResponse.json({
       success: true,
       count: scored.length,
-      output: `Scored ${scored.length} unfulfilled orders and upserted predictions.`,
+      output: `Scored ${scored.length} unfulfilled orders for fraud risk.`,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown server error";
