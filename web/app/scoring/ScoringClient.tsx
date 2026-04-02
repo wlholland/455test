@@ -100,8 +100,16 @@ export default function ScoringClient() {
         <table style={{ fontSize: "14px" }}>
           <tbody>
             <tr>
-              <td style={{ color: "var(--muted)", width: "160px", padding: "6px 0" }}>Scoring endpoint</td>
+              <td style={{ color: "var(--muted)", width: "200px", padding: "6px 0" }}>Task</td>
+              <td>Binary fraud classification (<code>is_fraud</code>)</td>
+            </tr>
+            <tr>
+              <td style={{ color: "var(--muted)", padding: "6px 0" }}>Scoring endpoint</td>
               <td><code>web/app/api/run-scoring/route.ts</code></td>
+            </tr>
+            <tr>
+              <td style={{ color: "var(--muted)", padding: "6px 0" }}>Scoring logic</td>
+              <td><code>web/lib/score-order.ts</code></td>
             </tr>
             <tr>
               <td style={{ color: "var(--muted)", padding: "6px 0" }}>Input tables</td>
@@ -112,8 +120,20 @@ export default function ScoringClient() {
               <td><code>order_predictions</code></td>
             </tr>
             <tr>
+              <td style={{ color: "var(--muted)", padding: "6px 0" }}>Features used</td>
+              <td><code>risk_score, order_total, promo_used, num_items,<br/>payment_method, device_type, customer_age</code></td>
+            </tr>
+            <tr>
+              <td style={{ color: "var(--muted)", padding: "6px 0" }}>Batch training</td>
+              <td><code>jobs/train_model.py</code> (RandomForest, class_weight=balanced)</td>
+            </tr>
+            <tr>
+              <td style={{ color: "var(--muted)", padding: "6px 0" }}>Batch inference</td>
+              <td><code>jobs/run_inference.py</code></td>
+            </tr>
+            <tr>
               <td style={{ color: "var(--muted)", padding: "6px 0" }}>Runs on</td>
-              <td><code>Vercel serverless function</code></td>
+              <td>Vercel serverless function (TypeScript heuristic mirrors Python model)</td>
             </tr>
           </tbody>
         </table>

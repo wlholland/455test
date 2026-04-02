@@ -1,13 +1,23 @@
 {
-  "model_version": "1.1.0",
-  "trained_at_utc": "2026-03-26T21:00:52.196387",
+  "model_version": "2.0.0",
+  "trained_at_utc": "2026-04-02T20:59:43.459374",
   "feature_list": [
     "num_items",
-    "customer_age",
+    "num_distinct_products",
+    "order_total",
+    "order_subtotal",
+    "promo_used",
+    "risk_score",
+    "payment_method_code",
+    "device_type_code",
+    "loyalty_tier_code",
     "order_dow",
-    "order_month"
+    "order_month",
+    "customer_age"
   ],
-  "label": "late_delivery",
+  "label": "is_fraud",
   "warehouse_table": "modeling_orders",
-  "warehouse_rows": 5000
+  "warehouse_rows": 5008,
+  "algorithm": "RandomForestClassifier (class_weight=balanced)",
+  "note": "Predictions are stored in order_predictions table under the columns late_delivery_probability (= fraud_probability) and predicted_late_delivery (= predicted_fraud) for backward compatibility with the existing schema."
 }
